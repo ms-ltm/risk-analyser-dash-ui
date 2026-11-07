@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ProductsTable } from "@/components/products-table"
 import { TablePagination } from "@/components/table-pagination"
+import { RiskSummaryStats, type RiskSummary } from "@/components/risk-summary-stats"
 import { cn } from "@/lib/utils"
 import type { RiskyProductsResponse } from "@/lib/risk-types"
 
@@ -56,6 +57,18 @@ export function RiskDashboard() {
     },
   )
 
+  const summaryKey = `/api/risk-summary${search ? `?search=${encodeURIComponent(search)}` : ""}`
+  const { data: summary, mutate: mutateSummary, isValidating: summaryValidating } = useSWR<RiskSummary>(
+    summaryKey,
+    fetcher as unknown as (url: string) => Promise<RiskSummary>,
+    { refreshInterval: REFRESH_INTERVAL_MS, keepPreviousData: true, revalidateOnFocus: false },
+  )
+
+  const refreshAll = () => {
+    mutate()
+    mutateSummary()
+  }
+
   const showSkeleton = isLoading && !data
 
   return (
@@ -71,8 +84,8 @@ export function RiskDashboard() {
           <p className="text-xs text-muted-foreground" aria-live="polite">
             {isValidating ? "Refreshing…" : lastUpdated ? `Updated ${timeFormat.format(lastUpdated)}` : null}
           </p>
-          <Button variant="outline" onClick={() => mutate()} disabled={isValidating}>
-            <RefreshCw className={cn(isValidating && "animate-spin")} aria-hidden="true" />
+          <Button variant="outline" onClick={refreshAll} disabled={isValidating || summaryValidating}>
+            <RefreshCw className={cn((isValidating || summaryValidating) && "animate-spin")} aria-hidden="true" />
             Refresh
           </Button>
         </div>
@@ -102,11 +115,7 @@ export function RiskDashboard() {
               </button>
             )}
           </div>
-          {data && (
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground tabular-nums">{data.total_records}</span> risky {data.total_records === 1 ? "product" : "products"}
-            </p>
-          )}
+          <RiskSummaryStats summary={summary} total={data?.total_records} />
         </div>
 
         {error && (
