@@ -104,7 +104,7 @@ export function RiskDashboard() {
           </div>
           {data && (
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground tabular-nums">{data.total_records}</span> risky products
+              <span className="font-medium text-foreground tabular-nums">{data.total_records}</span> risky {data.total_records === 1 ? "product" : "products"}
             </p>
           )}
         </div>

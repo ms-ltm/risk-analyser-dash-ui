@@ -7,8 +7,9 @@ import { getDaysLeft, type RiskyProduct } from "@/lib/risk-types"
 
 const numberFormat = new Intl.NumberFormat("en-US")
 
-function DaysLeft({ days }: { days: number | null }) {
-  if (days === null) return <span className="text-muted-foreground">—</span>
+function DaysLeft({ days, outOfStock }: { days: number | null; outOfStock: boolean }) {
+  if (days === null && !outOfStock) return <span className="text-muted-foreground">—</span>
+  days = days ?? 0
   return (
     <span
       className={cn(
@@ -17,7 +18,7 @@ function DaysLeft({ days }: { days: number | null }) {
         days > 7 && days <= 21 && "font-medium text-amber-700 dark:text-amber-400",
       )}
     >
-      {days} {days === 1 ? "day" : "days"}
+      {outOfStock ? "Out of stock" : days === 0 ? "< 1 day" : `${days} ${days === 1 ? "day" : "days"}`}
     </span>
   )
 }
@@ -74,7 +75,7 @@ export function ProductsTable({ products, isLoading, pageSize = 10 }: ProductsTa
                 {numberFormat.format(product.inventory.current_stock)}
               </TableCell>
               <TableCell className="text-right">
-                <DaysLeft days={getDaysLeft(product)} />
+                <DaysLeft days={getDaysLeft(product)} outOfStock={product.inventory.current_stock <= 0} />
               </TableCell>
               <TableCell>
                 <RiskBadge level={product.risk_analysis.overall_risk} />
